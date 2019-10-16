@@ -261,7 +261,12 @@ func (p *printer) objectItem(o *ast.ObjectItem) []byte {
 	}
 
 	for i, k := range o.Keys {
-		buf.WriteString(k.Token.Value().(string))
+		if o.Assign.IsValid() && i == len(o.Keys)-1 && len(o.Keys) == 1 {
+			buf.WriteString(k.Token.Value().(string))
+		} else {
+			buf.WriteString(k.Token.Text)
+		}
+
 		buf.WriteByte(blank)
 
 		// reach end of key
