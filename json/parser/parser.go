@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl/hcl/ast"
-	hcltoken "github.com/hashicorp/hcl/hcl/token"
-	"github.com/hashicorp/hcl/json/scanner"
-	"github.com/hashicorp/hcl/json/token"
+	"github.com/hashicorp/hcl/hcl/scanner"
+	"github.com/hashicorp/hcl/hcl/token"
 )
 
 type Parser struct {
@@ -41,7 +40,7 @@ func (p *Parser) Parse() (*ast.File, error) {
 	f := &ast.File{}
 	var err, scerr error
 	p.sc.Error = func(pos token.Pos, msg string) {
-		scerr = fmt.Errorf("%s: %s", pos, msg)
+		scerr = &PosError{Pos: pos, Err: errors.New(msg)}
 	}
 
 	// The root must be an object in JSON
@@ -106,7 +105,7 @@ func (p *Parser) objectItem() (*ast.ObjectItem, error) {
 	switch p.tok.Type {
 	case token.COLON:
 		pos := p.tok.Pos
-		o.Assign = hcltoken.Pos{
+		o.Assign = token.Pos{
 			Filename: pos.Filename,
 			Offset:   pos.Offset,
 			Line:     pos.Line,
@@ -161,7 +160,7 @@ func (p *Parser) objectValue() (ast.Node, error) {
 	tok := p.scan()
 
 	switch tok.Type {
-	case token.NUMBER, token.FLOAT, token.BOOL, token.NULL, token.STRING:
+	case token.NUMBER, token.FLOAT, token.BOOL, token.STRING, token.HEREDOC, token.NULL:
 		return p.literalType()
 	case token.LBRACE:
 		return p.objectType()
@@ -219,7 +218,7 @@ func (p *Parser) listType() (*ast.ListType, error) {
 	for {
 		tok := p.scan()
 		switch tok.Type {
-		case token.NUMBER, token.FLOAT, token.STRING:
+		case token.BOOL, token.NUMBER, token.FLOAT, token.STRING, token.HEREDOC:
 			node, err := p.literalType()
 			if err != nil {
 				return nil, err

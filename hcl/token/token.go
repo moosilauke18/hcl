@@ -43,6 +43,7 @@ const (
 	LBRACE // {
 	COMMA  // ,
 	PERIOD // .
+	COLON  // :
 
 	RBRACK // ]
 	RBRACE // }
